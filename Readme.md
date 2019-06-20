@@ -1,4 +1,4 @@
-# KKIAPAY
+# KKIAPAY / PrestaShop-module
 
 KkiaPay allows businesses to safely receive payments by mobile money, credit card and bank account.
 
