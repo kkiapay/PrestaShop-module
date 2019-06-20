@@ -1,0 +1,33 @@
+<?php
+
+global $_MODULE;
+$_MODULE = array();
+$_MODULE['<{kkiapay}prestashop>kkiapay_abb331b8f264ffbdd5dd3e7f14a0e9fa'] = 'kkiapay';
+$_MODULE['<{kkiapay}prestashop>kkiapay_b1d246a4251de29c6654c1b7d4418dc6'] = 'kkiaPay allows businesses to receive payments securely via mobile money, a credit card or a bank account.';
+$_MODULE['<{kkiapay}prestashop>kkiapay_40ec99718d6b5bd38b142cf80d1f34a5'] = 'Invalid configurations values';
+$_MODULE['<{kkiapay}prestashop>kkiapay_537812948d8811d9f00110af5cc967ce'] = 'Updated settings';
+$_MODULE['<{kkiapay}prestashop>kkiapay_24ace383b70d09954259c15cfeb9b2fd'] = 'Yes';
+$_MODULE['<{kkiapay}prestashop>kkiapay_6679e65c932b2c5ad98080ee21a4f0d4'] = 'No';
+$_MODULE['<{kkiapay}prestashop>kkiapay_e8f6406befb0c99943dd6c6dc1e7f5fb'] = 'On the right of the page';
+$_MODULE['<{kkiapay}prestashop>kkiapay_adaa23193abc905575c621c3550db2a0'] = 'In the center of the page';
+$_MODULE['<{kkiapay}prestashop>kkiapay_2beae5c84f5cf2d5a47eff9cfd05bbb6'] = 'On the left of the page';
+$_MODULE['<{kkiapay}prestashop>kkiapay_e7785de91330713fc2d12404bb6bd556'] = 'Settings';
+$_MODULE['<{kkiapay}prestashop>kkiapay_77f0926af3ee13c9f4478bce6771789b'] = 'Activate test mode';
+$_MODULE['<{kkiapay}prestashop>kkiapay_fd97c29220584cad166af0906ed64aeb'] = 'Select yes to put kkiapay in sandbox environment';
+$_MODULE['<{kkiapay}prestashop>kkiapay_5d3b1941139f89ce06f1d2afa29d7147'] = 'Public key';
+$_MODULE['<{kkiapay}prestashop>kkiapay_811a8d9a982106b2684a32e85ec7c00c'] = 'Get your API keys on the kkiapay dashboard in the Developers section';
+$_MODULE['<{kkiapay}prestashop>kkiapay_e9e61c0dd1dafa40252ce78a644634b2'] = 'Private key';
+$_MODULE['<{kkiapay}prestashop>kkiapay_1e6947ac7fb3a9529a9726eb692c8cc5'] = 'Secret';
+$_MODULE['<{kkiapay}prestashop>kkiapay_ac3b85a9edba2459734eb9f7e797e7ea'] = 'Color of the kkiapay widget';
+$_MODULE['<{kkiapay}prestashop>kkiapay_c261a7ba66b9ff57818151235cf2ee38'] = 'Set the color of the kkiapay window. For better harmonization, use the dominant color of your site or leave blank.';
+$_MODULE['<{kkiapay}prestashop>kkiapay_511969171614941d4c86444562e15a74'] = 'Disposition of the kkiapay widget';
+$_MODULE['<{kkiapay}prestashop>kkiapay_05f49559098a44a034419a1600d98f4e'] = 'Use this option to control where the kkiapay window should appear on your site';
+$_MODULE['<{kkiapay}prestashop>kkiapay_76b56638af22c17c4b07b74ada232fdb'] = 'Save';
+$_MODULE['<{kkiapay}prestashop>kkiapay_4dfff35d2990d6283c7f031d7a51e64c'] = 'back to the list';
+$_MODULE['<{kkiapay}prestashop>payment_fa04501841996a31b49934ab53f6e0bb'] = ' Use kkiapay to pay with your mobile money account, a credit card or a bank account';
+$_MODULE['<{kkiapay}prestashop>payment_execution_46ace3ac2b3dcd6a9556a746120f3bb7'] = 'Payment receipt';
+$_MODULE['<{kkiapay}prestashop>payment_execution_040ad9fc0b965415332b17e12ed6226d'] = 'Order number';
+$_MODULE['<{kkiapay}prestashop>payment_execution_a04db41511fbf5df5a55e14f4c53a349'] = 'Amount to be paid';
+$_MODULE['<{kkiapay}prestashop>payment_execution_6f212869bb4b093a382cf584df7c8c55'] = 'Payment method';
+$_MODULE['<{kkiapay}prestashop>payment_execution_44749712dbec183e983dcd78a7736c41'] = 'Date';
+$_MODULE['<{kkiapay}prestashop>payment_execution_303a74098e356909ffcf68b9bd4ca1b0'] = 'Confirm';
