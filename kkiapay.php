@@ -1,6 +1,6 @@
 <?php
-/**
-* 2007-2019 PrestaShop
+/*
+* 2007-2016 PrestaShop
 *
 * NOTICE OF LICENSE
 *
@@ -18,229 +18,211 @@
 * versions in the future. If you wish to customize PrestaShop for your
 * needs please refer to http://www.prestashop.com for more information.
 *
-*  @author    PrestaShop SA <contact@prestashop.com>
-*  @copyright 2007-2019 PrestaShop SA
-*  @license   http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
+*  @author PrestaShop SA <contact@prestashop.com>
+*  @copyright  2007-2016 PrestaShop SA
+*  @license    http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
 *  International Registered Trademark & Property of PrestaShop SA
 */
 
-use PrestaShop\PrestaShop\Core\Payment\PaymentOption;
+if (!defined('_PS_VERSION_'))
+	exit;
 
-if (!defined('_PS_VERSION_')) {
-    exit;
-}
-
-class Kkiapay extends PaymentModule
+class kkiapay extends PaymentModule
 {
-    protected $config_form = false;
+	protected $_html = '';
+	protected $_postErrors = array();
 
-    public function __construct()
-    {
-        $this->name = 'kkiapay';
-        $this->tab = 'payments_gateways';
-        $this->version = '1.0.0';
-        $this->author = 'kkiapay';
-        $this->need_instance = 0;
-	$this->module_key = 'eea9595b905b3279e130609bea3c0c9e';
+	public $details;
+	public $owner;
+	public $address;
+	public $extra_mail_vars;
+	public function __construct()
+	{
+		$this->name = 'kkiapay';
+		$this->tab = 'payments_gateways';
+		$this->version = '1.0.0';
+		$this->author = 'kkiapay';
+		$this->controllers = array('payment', 'validation');
+		$this->is_eu_compatible = 1;
 
-        /**
-         * Set $this->bootstrap to true if your module is compliant with bootstrap (PrestaShop 1.6)
-         */
-        $this->bootstrap = true;
+		$this->currencies = true;
+		$this->currencies_mode = 'checkbox';
 
-        parent::__construct();
+		$config = Configuration::getMultiple(array('KKIAPAY_PUBLIC', 'KKIAPAY_PRIVATE', 'KKIAPAY_SECRET', 'KKIAPAY_COLOR', 'KKIAPAY_CHECKBOX', 'KKIAPAY_POSITION'));
+		if (!empty($config['KKIAPAY_PUBLIC']))
+			$this->public = $config['KKIAPAY_PUBLIC'];
+		if (!empty($config['KKIAPAY_PRIVATE']))
+			$this->private = $config['KKIAPAY_PRIVATE'];
+		if (!empty($config['KKIAPAY_SECRET']))
+			$this->secret = $config['KKIAPAY_SECRET'];
+		if (!empty($config['KKIAPAY_COLOR']))
+			$this->color = $config['KKIAPAY_COLOR'];
+		if (!empty($config['KKIAPAY_CHECKBOX']))
+			$this->checkbox = $config['KKIAPAY_CHECKBOX'];
+		if (!empty($config['KKIAPAY_POSITION']))
+			$this->position = $config['KKIAPAY_POSITION'];
 
-        $this->displayName = $this->l('kkiapay');
-        $this->description = $this->l('kkiaPay permet aux entreprises de recevoir des paiements en toute sécurité via de l\'argent mobile, une carte de crédit ou un compte bancaire.');
+		$this->bootstrap = true;
+		parent::__construct();
 
-        $this->ps_versions_compliancy = array('min' => '1.6', 'max' => _PS_VERSION_);
-        $this->limited_currencies = array('XOF');
-    }
+		$this->displayName = $this->l('kkiapay');
+		$this->description = $this->l('kkiaPay permet aux entreprises de recevoir des paiements en toute sécurité via de l\'argent mobile, une carte de crédit ou un compte bancaire.');
+		$this->confirmUninstall = $this->l('Voulez-vous désinstaller kkiapay');
+		$this->ps_versions_compliancy = array('min' => '1.6', 'max' => '1.6.99.99');
+		$this->limited_currencies = array('XOF');
 
-    /**
-     * Don't forget to create update methods if needed:
-     * http://doc.prestashop.com/display/PS16/Enabling+the+Auto-Update
-     */
-    public function install()
-    {
+		if (!isset($this->public))
+			$this->warning = $this->l('La clé publique doit être configurée pour utiliser ce module');
+		if (!count(Currency::checkPaymentCurrencies($this->id)))
+			$this->warning = $this->l('La monnaie XOF (FCFA) doit être configurée pour utiliser ce module');
 
-        Configuration::updateValue('KKIAPAY_LIVE_MODE', false);
+		$this->extra_mail_vars = array(
+										'{private_key}' => Configuration::get('KKIAPAY_PUBLIC'),
+										'{public_key}' => Configuration::get('KKIAPAY_PRIVATE'),
+										'{secret}' => Configuration::get('KKIAPAY_SECRET'),
+										'{color}' => Configuration::get('KKIAPAY_COLOR'),
+										'{checkbox}' => Configuration::get('KKIAPAY_CHECKBOX'),
+										'{position}' => Configuration::get('KKIAPAY_POSITION')
+										);
+	}
 
-        return parent::install() &&
-            $this->registerHook('header') &&
-            $this->registerHook('paymentOptions');
-    }
+	public function install()
+	{
+		if (!parent::install() || !$this->registerHook('payment') || ! $this->registerHook('displayPaymentEU') || !$this->registerHook('paymentReturn'))
+			return false;
+		return true;
+	}
 
-    public function uninstall()
-    {
-        Configuration::deleteByName('KKIAPAY_LIVE_MODE');
+	public function uninstall()
+	{
+		if (!Configuration::deleteByName('KKIAPAY_PUBLIC')
+				|| !Configuration::deleteByName('KKIAPAY_PRIVATE')
+				|| !Configuration::deleteByName('KKIAPAY_SECRET')
+				|| !Configuration::deleteByName('KKIAPAY_COLOR')
+				|| !Configuration::deleteByName('KKIAPAY_CHECKBOX')
+				|| !Configuration::deleteByName('KKIAPAY_POSITION')
+				|| !parent::uninstall())
+			return false;
+		return true;
+	}
 
-        return parent::uninstall();
-    }
+	protected function _postValidation()
+	{
+		if (Tools::isSubmit('btnSubmit'))
+		{
+			if (!Tools::getValue('KKIAPAY_PUBLIC'))
+				$this->_postErrors[] = $this->l('La clée publique est recquise.');
+		}
+	}
 
-    public function hookPaymentOptions($params)
-    {
-        
-        $currency_id = $params['cart']->id_currency;
-        $currency = new Currency((int)$currency_id);
+	protected function _postProcess()
+	{
+		if (Tools::isSubmit('btnSubmit'))
+		{
+			Configuration::updateValue('KKIAPAY_PUBLIC', Tools::getValue('KKIAPAY_PUBLIC'));
+			Configuration::updateValue('KKIAPAY_PRIVATE', Tools::getValue('KKIAPAY_PRIVATE'));
+			Configuration::updateValue('KKIAPAY_SECRET', Tools::getValue('KKIAPAY_SECRET'));
+			Configuration::updateValue('KKIAPAY_COLOR', Tools::getValue('KKIAPAY_COLOR'));
+			Configuration::updateValue('KKIAPAY_CHECKBOX', Tools::getValue('KKIAPAY_CHECKBOX'));
+			Configuration::updateValue('KKIAPAY_POSITION', Tools::getValue('KKIAPAY_POSITION'));
+		}
+		$this->_html .= $this->displayConfirmation($this->l('Paramètres mis à jour'));
+	}
 
-        if (in_array($currency->iso_code, $this->limited_currencies ) == false ){
-            return false;
-    }
-        
-        $key = Configuration::get('KKIAPAY_PUBLIC');
-        $color = Configuration::get('KKIAPAY_COLOR');
-        $test = Configuration::get('KKIAPAY_CHECKBOX');
-        $position= Configuration::get('KKIAPAY_POSITION');
-        $private_key= Configuration::get('KKIAPAY_PRIVATE');
-        $secret = Configuration::get('KKIAPAY_SECRET');
-        $firstname_customer=($params['cookie']->customer_firstname);
-        $lastname_customer=($params['cookie']->customer_lastname);
-        $price= $params['cart']->getOrderTotal();
-        //var_dump($this->module->currentOrder);
+	protected function _displaykkiapay()
+	{
+		return $this->display(__FILE__, 'infos.tpl');
+	}
 
-        $mylink = $this->context->link->getModuleLink('kkiapay', 'api');
-        $mylink = $mylink.'?success=kkiapayojhsbbbes12345';
-        //var_dump($mylink);
-        
-        $this->context->smarty->assign('firstname', $firstname_customer);
-        $this->context->smarty->assign('lastname', $lastname_customer);
-        $this->context->smarty->assign('api', $key);
-        $this->context->smarty->assign('price', $price);
-        $this->context->smarty->assign('color', $color);
-        $this->context->smarty->assign('position', $position);
-        $this->context->smarty->assign('url', $mylink);
-        $this->context->smarty->assign('secret', $secret);
-        $this->context->smarty->assign('test', $test);
-        $this->context->smarty->assign('private', $private_key);
+	public function getContent()
+	{
+		if (Tools::isSubmit('btnSubmit'))
+		{
+			$this->_postValidation();
+			if (!count($this->_postErrors))
+				$this->_postProcess();
+			else
+				foreach ($this->_postErrors as $err)
+					$this->_html .= $this->displayError($err);
+		}
+		else
+			$this->_html .= '<br />';
 
-        $paymentForm = $this->fetch('module:kkiapay/views/templates/admin/hook/front/api/payment.tpl');
+		$this->_html .= $this->_displaykkiapay();
+		$this->_html .= $this->renderForm();
 
-        $cardPaymentOption = new PaymentOption();
+		return $this->_html;
+	}
 
-        $options= $cardPaymentOption->setCallToActionText('kkiapay')
-                          ->setAdditionalInformation($paymentForm)
-                          ->setAction($this->context->link->getModuleLink($this->name, 'confirmation', array(), true))
-                          ->setLogo("http://162.243.162.212/wp-content/plugins/kkiapay-woocommerce/assets/img/kkiapay.svg");
-        
-        return [$options];
+	public function hookPayment($params)
+	{
+		if (!$this->active)
+			return;
+		if (!$this->checkCurrency($params['cart']))
+			return;
 
-    }
+		$this->smarty->assign(array(
+			'this_path' => $this->_path,
+			'this_path_bw' => $this->_path,
+			'this_path_ssl' => Tools::getShopDomainSsl(true, true).__PS_BASE_URI__.'modules/'.$this->name.'/'
+		));
+		return $this->display(__FILE__, 'payment.tpl');
+	}
 
+	public function hookDisplayPaymentEU($params)
+	{
+		if (!$this->active)
+			return;
 
-    public function getOptions()
+		if (!$this->checkCurrency($params['cart']))
+			return;
 
-    {
-            $options = array (
-   
-            array (
-   
-                  'id_checkbox_options' => 1,
-   
-                  'checkbox_options_name' => '',
-                  
-                  'checked' => 'checked' )
-               );
-   
-         return $options;
-   
-    }
+		$payment_options = array(
+			'cta_text' => $this->l('Payez avec kkiapay'),
+			'action' => $this->context->link->getModuleLink($this->name, 'validation', array(), true)
+		);
 
-    public function hookPaymentReturn($params) 
-    {   
+		return $payment_options;
+	}
 
-        // die();
+	public function hookPaymentReturn($params)
+	{
+		if (!$this->active)
+			return;
 
-        if (!$this->active) {
-            return;
-        }
-        if (!isset($params['order']) || ($params['order']->module != $this->name)) {
-            return false;
-        }
-        if (isset($params['order']) && Validate::isLoadedObject($params['order']) && isset($params['order']->valid)) {
-            $this->smarty->assign(array(
-                'id_order' => $params['order']->id,
-                'valid' => $params['order']->valid,
-                ));
-        }
-        if (isset($params['order']->reference) && !empty($params['order']->reference)) {
-            $this->smarty->assign('reference', $params['order']->reference);
-        }
-        $this->smarty->assign(array(
-            'shop_name' => $this->context->shop->name,
-            'reference' => $params['order']->reference,
-            'contact_url' => $this->context->link->getPageLink('contact', true)
-            ));
-        return $this->fetch('kkiapay/views/templates/admin/hook/front/api/payment_return.tpl'); 
-    }
+		$state = $params['objOrder']->getCurrentState();
+		if (in_array($state, array(Configuration::get('PS_OS_PAYMENT'))))
+		{
+			$this->smarty->assign(array(
+				'total_to_pay' => Tools::displayPrice($params['total_to_pay'], $params['currencyObj'], false),
+				'status' => 'ok',
+				'id_order' => $params['objOrder']->id
+			));
+			
+			if (isset($params['objOrder']->reference) && !empty($params['objOrder']->reference))
+				$this->smarty->assign('reference', $params['objOrder']->reference);
+		}
+		else
+			$this->smarty->assign('status', 'failed');
+		return $this->display(__FILE__, 'payment_return.tpl');
+	}
 
-    public function hookActionValidateOrder($params){
-        
-        var_dump($params);
-        die('');
+	public function checkCurrency($cart)
+	{
+		$currency_order = new Currency($cart->id_currency);
+		$currencies_module = $this->getCurrency($cart->id_currency);
 
-    }
+		if (is_array($currencies_module))
+			foreach ($currencies_module as $currency_module)
+				if ($currency_order->id == $currency_module['id_currency'])
+					return true;
+		return false;
+	}
 
+	public function renderForm()
+	{
 
-    public function getContent()
-    {
-        $output = null;
-        // $myModuleName = strval(Tools::getValue('password'));
-        // die($myModuleName);
-        if (Tools::isSubmit('submit'.$this->name)) {
-            $myModuleName = (string)Tools::getValue('KKIAPAY_PUBLIC');
-            $myModulePrivate = (string)Tools::getValue('KKIAPAY_PRIVATE');
-            $myModuleSecret = (string)Tools::getValue('KKIAPAY_SECRET');
-            $myModuleColor = (string)Tools::getValue('KKIAPAY_COLOR');
-            $myModuleCheckbox = (string)Tools::getValue('KKIAPAY_CHECKBOX');
-            $myModulePosition = (string)Tools::getValue('KKIAPAY_POSITION');
-            
-
-            $v = (string)Tools::getValue('api');
-            // var_dump($myModuleCheckbox);die();
-
-            if (
-                !$myModuleName ||
-                empty($myModuleName) ||
-                !Validate::isGenericName($myModuleName)
-            ) {
-                
-                $output .= $this->displayError($this->l('Valeurs de configurations invalides'));
-            } else {
-                Configuration::updateValue('KKIAPAY_PUBLIC', $myModuleName);
-                Configuration::updateValue('KKIAPAY_PRIVATE', $myModulePrivate);
-                Configuration::updateValue('KKIAPAY_SECRET', $myModuleSecret);
-                Configuration::updateValue('KKIAPAY_COLOR', $myModuleColor);
-                Configuration::updateValue('KKIAPAY_CHECKBOX',$myModuleCheckbox );
-                Configuration::updateValue('KKIAPAY_POSITION',$myModulePosition );
-                $output .= $this->displayConfirmation($this->l('Paramètres mis à jour'));
-            }
-        }
-
-        return $output.$this->displayForm();
-    }
-
-
-        public function displayForm()
-    {
-        $password = (string)Tools::getValue('password');
-        // var_dump($password);die();
-        // if($password) {
-        // // only save if a value was entered
-        // Configuration::updateValue('passwordKey', $password);
-        // }
-        $options_test = array(
-            array(
-              'id_option' => '1', 
-              'name' => $this->l('Oui') 
-            ),
-            array(
-              'id_option' => '0',
-              'name' => $this->l('Non')
-            )
-        );
-
-        $options = array(
+		$options = array(
             array(
               'id_option' => 'right', 
               'name' => $this->l('A droite de la page') 
@@ -255,151 +237,130 @@ class Kkiapay extends PaymentModule
             )
         );
 
-        // Get default language
-        $this->hookDisplayHeader();
-        $defaultLang = (int)Configuration::get('PS_LANG_DEFAULT');
+		$fields_form = array(
+			'form' => array(
+				'legend' => array(
+					'title' => $this->l('Paramètres'),
+				),
+				'input' => array(
+					array(
+						'type' => 'switch',
+						'label' => $this->l('Activez le mode test'),
+						'desc'=> $this->l('Configurez sur oui pour mettre en environnement sandbox'),
+						'name' => 'KKIAPAY_CHECKBOX',
+						'is_bool' => true,
+						'values' => array(
+							array(
+								'id' => 'active_on',
+								'value' => "1",
+							),
+							array(
+								'id' => 'active_off',
+								'value' => "0",
+							)
+						),
+					),
+					array(
+						'col' => '6',
+						'type' => 'text',
+						'label' => $this->l('Clé publique'),
+						'name' => 'KKIAPAY_PUBLIC',
+						'class'=>'form-control',
+						'desc'=> $this->l('Obtenez vos clés d\'API sur le dashboard kkiapay dans la section Développeurs'),
+						'required' => true
+					),
+					array(
+						'col' => '6',
+						'type' => 'text',
+						'label' => $this->l('Clé privé'),
+						'name' => 'KKIAPAY_PRIVATE',
+						'class'=>'form-control',
+						'desc'=> $this->l('Obtenez vos clés d\'API sur le dashboard kkiapay dans la section Développeurs'),
+					),
+					array(
+						'col' => '6',
+						'type' => 'text',
+						'label' => $this->l('Secret'),
+						'name' => 'KKIAPAY_SECRET',
+						'class'=>'form-control',
+						'desc'=> $this->l('Obtenez vos clés d\'API sur le dashboard kkiapay dans la section Développeurs'),
+					),
+					array(
+						'col' => '6',
+						'type' => 'text',
+						'label' => $this->l('Couleur du widget kkiapay'),
+						'name' => 'KKIAPAY_COLOR',
+						'class'=>'form-control',
+						'desc'=> $this->l('Paramétrez la couleur de la fenêtre kkiapay. Pour une meilleure harmonisation, utilisez la couleur dominante de votre site ou laissez vide.'),
+					),
+					array(
+						'type' => 'select',
+						'lang' => true,
+						'label' => $this->l('Disposition du widget kkiapay'),
+						'name' => 'KKIAPAY_POSITION',
+						'class'=>'form-control',
+						'desc'=> $this->l('Utilisez cette option pour contrôler l\'endroit où la fenêtre kkiapay devrait s\'afficher sur votre site'),
+						'options' => array(
+						  'query' => $options,
+						  'id' => 'id_option', 
+						  'name' => 'name'
+						),
+					),
+				),
+				'submit' => array(
+					'title' => $this->l('Sauvegarder'),
+				)
+			),
+		);
 
-        $fieldsForm=array();
-        // Init Fields form array
-        $fieldsForm[0]['form'] = [
-            'legend' => [
-                'title' => $this->l('Paramètres'),
-            ],
-            'input' => [                
-                array(
-                    'type' => 'switch',
-                    'label' => $this->l('Activez le mode test'),
-                    'desc'=> $this->l('Configurez sur oui pour mettre en environnement sandbox'),
-                    'name' => 'KKIAPAY_CHECKBOX',
-                    'is_bool' => true,
-                    'values' => array(
-                        array(
-                            'id' => 'active_on',
-                            'value' => "1",
-                            'label' => $this->trans('Enabled', array(), 'Admin.Global'),
-                        ),
-                        array(
-                            'id' => 'active_off',
-                            'value' => "0",
-                            'label' => $this->trans('Disabled', array(), 'Admin.Global'),
-                        )
-                    ),
-                )
-
-                ,
-                
-                [
-                    'col' => '6',
-                    'type' => 'text',
-                    'label' => $this->l('Clé publique'),
-                    'name' => 'KKIAPAY_PUBLIC',
-                    'class'=>'form-control',
-                    'desc'=> $this->l('Obtenez vos clés d\'API sur le dashboard kkiapay dans la section Développeurs'),
-                    'required' => true
-                ],
-                [
-                    'col' => '6',
-                    'type' => 'text',
-                    'label' => $this->l('Clé privé'),
-                    'name' => 'KKIAPAY_PRIVATE',
-                    'class'=>'form-control',
-                    'desc'=> $this->l('Obtenez vos clés d\'API sur le dashboard kkiapay dans la section Développeurs'),
-                ],
-                
-                [
-                    'col' => '6',
-                    'type' => 'text',
-                    'label' => $this->l('Secret'),
-                    'name' => 'KKIAPAY_SECRET',
-                    'size' => 20,
-                    'class'=>'form-control',
-                    'desc'=> $this->l('Obtenez vos clés d\'API sur le dashboard kkiapay dans la section Développeurs'),
-                ]
-                ,
-
-                [
-                    'col' => '6',
-                    'type' => 'text',
-                    'label' => $this->l('Couleur du widget kkiapay'),
-                    'name' => 'KKIAPAY_COLOR',
-                    'class'=>'form-control',
-                    'desc'=> $this->l('Paramétrez la couleur de la fenêtre kkiapay. Pour une meilleure harmonisation, utilisez la couleur dominante de votre site ou laissez vide.'),
-                ]
-                ,
-
-                array(
-                    'type' => 'select',
-                    'lang' => true,
-                    'label' => $this->l('Disposition du widget kkiapay'),
-                    'name' => 'KKIAPAY_POSITION',
-                    'class'=>'form-control',
-                    'desc'=> $this->l('Utilisez cette option pour contrôler l\'endroit où la fenêtre kkiapay devrait s\'afficher sur votre site'),
-                    'options' => array(
-                      'query' => $options,
-                      'id' => 'id_option', 
-                      'name' => 'name'
-                    ),
-                ),
-
-            ],
-            'submit' => [
-                'title' => $this->l('Sauvegarder'),
-                'class' => 'btn btn-default pull-right'
-            ]
-        ];
-
-        $helper = new HelperForm();
-        // $helper->fields_value["KKIAPAY_CHECKBOX_1"] = true;
-        // Module, token and currentIndex
-        $helper->module = $this->module;
+		$helper = new HelperForm();
+		$helper->show_toolbar = false;
+		$helper->table = $this->table;
+		$helper->module = $this->module;
         $helper->name_controller = $this->name;
         $helper->token = Tools::getAdminTokenLite('AdminModules');
-        $helper->currentIndex = AdminController::$currentIndex.'&configure='.$this->name;
+		$helper->currentIndex = AdminController::$currentIndex.'&configure='.$this->name;
+		
+		$lang = new Language((int)Configuration::get('PS_LANG_DEFAULT'));
+		$helper->default_form_language = $lang->id;
+		$helper->allow_employee_form_lang = Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') ? Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') : 0;
+		$this->fields_form = array();
 
-        // Language
-        $helper->default_form_language = $defaultLang;
-        $helper->allow_employee_form_lang = $defaultLang;
+		
 
-        // Title and toolbar
-        $helper->title = $this->displayName;
-        $helper->show_toolbar = true;        // false -> remove toolbar
-        $helper->toolbar_scroll = true;      // yes - > Toolbar is always visible on the top of the screen.
-        $helper->submit_action = 'submit'.$this->name;
-        $helper->toolbar_btn = [
-            'save' => [
-                'desc' => $this->l('Sauvegarder'),
-                'href' => AdminController::$currentIndex.'&configure='.$this->name.'&save'.$this->name.
-                '&token='.Tools::getAdminTokenLite('AdminModules'),
-            ],
-            'back' => [
-                'href' => AdminController::$currentIndex.'&token='.Tools::getAdminTokenLite('AdminModules'),
-                'desc' => $this->l('Retour à la liste')
-            ]
-        ];
 
-        // Load current value
-        // die(Configuration::get('KKIAPAY_NAME'));
-        // var_dump(Configuration::get('KKIAPAY_CHECKBOX_1'));
-        // die();
-        $myModulePosition=Configuration::get('KKIAPAY_POSITION');
-        // var_dump($myModulePosition);
-        // die();
+		$helper->id = (int)Tools::getValue('id_carrier');
+		$helper->identifier = $this->identifier;
+		$helper->submit_action = 'btnSubmit';
+		$helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false).'&configure='.$this->name.'&tab_module='.$this->tab.'&module_name='.$this->name;
+		$helper->token = Tools::getAdminTokenLite('AdminModules');
+		$helper->tpl_vars = array(
+			'fields_value' => $this->getConfigFieldsValues(),
+			'languages' => $this->context->controller->getLanguages(),
+			'id_language' => $this->context->language->id
+		);
+
+		$myModulePosition=Configuration::get('KKIAPAY_POSITION');
+
         $helper->fields_value['KKIAPAY_PUBLIC'] = Configuration::get('KKIAPAY_PUBLIC');
         $helper->fields_value['KKIAPAY_SECRET'] = Configuration::get('KKIAPAY_SECRET');
         $helper->fields_value['KKIAPAY_PRIVATE'] = Configuration::get('KKIAPAY_PRIVATE');
         $helper->fields_value['KKIAPAY_COLOR'] = Configuration::get('KKIAPAY_COLOR');
         $helper->fields_value['KKIAPAY_CHECKBOX'] = Configuration::get('KKIAPAY_CHECKBOX');
         $helper->fields_value['KKIAPAY_POSITION'] = Configuration::get('KKIAPAY_POSITION');
-        return $helper->generateForm($fieldsForm);
-    }
 
+		return $helper->generateForm(array($fields_form));
+	}
 
-    public function hookDisplayHeader()
-    {
-        // die();
-        $this->context->controller->addCSS($this->_path.'views/css/button.css', 'all');
-        $this->context->controller->addJS($this->_path.'views/css/app.js', 'all');
-    }
-
-   
+	public function getConfigFieldsValues()
+	{
+		return array(
+			'KKIAPAY_PUBLIC' => Tools::getValue('KKIAPAY_PUBLIC', Configuration::get('KKIAPAY_PUBLIC')),
+			'KKIAPAY_SECRET' => Tools::getValue('KKIAPAY_SECRET', Configuration::get('KKIAPAY_SECRET')),
+			'KKIAPAY_PRIVATE' => Tools::getValue('KKIAPAY_PRIVATE', Configuration::get('KKIAPAY_PRIVATE')),
+			'KKIAPAY_COLOR' => Tools::getValue('KKIAPAY_COLOR', Configuration::get('KKIAPAY_COLOR')),
+			'KKIAPAY_CHECKBOX' => Tools::getValue('KKIAPAY_CHECKBOX', Configuration::get('KKIAPAY_CHECKBOX')),
+			'KKIAPAY_POSITION' => Tools::getValue('KKIAPAY_POSITION', Configuration::get('KKIAPAY_POSITION')),
+		);
+	}
 }

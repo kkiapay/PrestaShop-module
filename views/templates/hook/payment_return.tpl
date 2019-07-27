@@ -1,5 +1,4 @@
-<?php
-/*
+{*
 * 2007-2016 PrestaShop
 *
 * NOTICE OF LICENSE
@@ -22,14 +21,22 @@
 *  @copyright  2007-2016 PrestaShop SA
 *  @license    http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
 *  International Registered Trademark & Property of PrestaShop SA
-*/
-				    	
-header("Expires: Mon, 26 Jul 1997 05:00:00 GMT");
-header("Last-Modified: ".gmdate("D, d M Y H:i:s")." GMT");
-						
-header("Cache-Control: no-store, no-cache, must-revalidate");
-header("Cache-Control: post-check=0, pre-check=0", false);
-header("Pragma: no-cache");
-						
-header("Location: ../");
-exit;
+*}
+
+{if $status == 'ok'}
+<h3 style="color: green">{l s='Votre commande a réussi.' mod='kkiapay'}</h3>
+		<div class="box">
+		<h4>{l s='Résumé de la commande' mod='kkiapay'}</h3>
+		{if !isset($reference)}
+			- {l s='Référence de la commande' mod='kkiapay'} : {$id_order|escape:'html'}
+		{else}
+			- {l s='Référence de la commande' mod='kkiapay'} : {$reference|escape:'html'}
+		<br />- {l s='Total' mod='kkiapay'} : <span class="price"><strong>{$total_to_pay}</strong></span>
+		{/if}
+		</div>
+{else}
+	<p class="warning">
+		{l s='Nous avions notifié une erreur sur votre commande' mod='kkiapay'} 
+		<a href="{$link->getPageLink('contact', true)|escape:'html'}">{l s='L\'équipe de support' mod='kkiapay'}</a>.
+	</p>
+{/if}
