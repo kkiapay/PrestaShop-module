@@ -51,7 +51,7 @@
         button.addEventListener('click',function(event){
             //console.log(url);
              event.preventDefault()
-            openKkiapayWidget({amount:price, sandbox:bool, name:firstname+ ' ' +lastname,position,callback:url,theme:color,key:api})
+            openKkiapayWidget({amount:price, sandbox:bool, name:firstname+ ' ' +lastname,position,callback:url,theme:color,key:api,sdk:'prestashop'})
            
         })
     {/literal}
