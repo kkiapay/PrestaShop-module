@@ -121,7 +121,7 @@ class Kkiapay extends PaymentModule
         $options= $cardPaymentOption->setCallToActionText('kkiapay')
                           ->setAdditionalInformation($paymentForm)
                           ->setAction($this->context->link->getModuleLink($this->name, 'confirmation', array(), true))
-                          ->setLogo("http://162.243.162.212/wp-content/plugins/kkiapay-woocommerce/assets/img/kkiapay.svg");
+                          ->setLogo("https://firebasestorage.googleapis.com/v0/b/love-kkiapay.appspot.com/o/kkiapay.svg?alt=media&token=236aa08e-e679-4df4-85a7-ecc354c72d86");
         
         return [$options];
 
