@@ -33,6 +33,7 @@
 
         var firstname="{$firstname|escape:'htmlall':'UTF-8'}"
         var lastname ="{$lastname|escape:'htmlall':'UTF-8'}"
+        var email ="{$email|escape:'htmlall':'UTF-8'}"
         var price ="{$price|escape:'htmlall':'UTF-8'}"
         var api ="{$api|escape:'htmlall':'UTF-8'}"
         var color ="{$color|escape:'htmlall':'UTF-8'}"
@@ -40,7 +41,7 @@
         var url = "{$url|escape:'htmlall':'UTF-8'}"
         var test ="{$test|escape:'htmlall':'UTF-8'}"
         var bool = null
-        console.log(api);
+
         if (test==1){
              bool="true";   
         }else{
@@ -49,9 +50,8 @@
         {literal}
         let button=document.querySelector('.kkiapay-button-prestashop')
         button.addEventListener('click',function(event){
-            //console.log(url);
              event.preventDefault()
-            openKkiapayWidget({amount:price, sandbox:bool, name:firstname+ ' ' +lastname,position,callback:url,theme:color,key:api,sdk:'prestashop'})
+            openKkiapayWidget({amount:price, sandbox:bool, name:firstname+ ' ' +lastname,email,position,callback:url,theme:color,key:api,sdk:'prestashop'})
            
         })
     {/literal}
