@@ -121,7 +121,7 @@ class Kkiapay extends PaymentModule
         $options= $cardPaymentOption->setCallToActionText('Payez par Mobile Money et par Carte Bancaire (Kkiapay)')
                           ->setAdditionalInformation($paymentForm)
                           ->setAction($this->context->link->getModuleLink($this->name, 'confirmation', array(), true))
-                          ->setLogo("https://firebasestorage.googleapis.com/v0/b/love-kkiapay.appspot.com/o/kkiapay.svg?alt=media&token=236aa08e-e679-4df4-85a7-ecc354c72d86");
+                          ->setLogo('modules/kkiapay/logo.png');
         
         return [$options];
 
@@ -397,8 +397,7 @@ class Kkiapay extends PaymentModule
     public function hookDisplayHeader()
     {
         // die();
-        $this->context->controller->addCSS($this->_path.'views/css/button.css', 'all');
-        $this->context->controller->addJS($this->_path.'views/css/app.js', 'all');
+        $this->context->controller->addCSS($this->_path.'views/css/front.css', 'all');
     }
 
    

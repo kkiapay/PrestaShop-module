@@ -25,3 +25,16 @@
 * Don't forget to prefix your containers with your own identifier
 * to avoid any conflicts with others containers.
 */
+
+.payment-option:has(img[src="modules/kkiapay/logo.png"]) {
+  display: flex;
+  align-items: center;
+  margin-bottom: unset !important;
+
+  > label {
+    margin-bottom: unset !important;
+    > img {
+      height: 28px;
+    }
+  }
+}

@@ -61,6 +61,7 @@ class kkiapayconfirmationModuleFrontController extends ModuleFrontController
         $price= (float)$cart->getOrderTotal(true, Cart::BOTH);
         $firstname_customer=$customer->firstname;
         $lastname_customer=$customer->lastname;
+        $email=$customer->email;
         $mylink = $this->context->link->getModuleLink('kkiapay','api');
         $mylink = $mylink.'?success=kkiapayojhsbbbes12345';
 
@@ -76,6 +77,7 @@ class kkiapayconfirmationModuleFrontController extends ModuleFrontController
               $this->context->smarty->assign('firstname',$firstname_customer);
               $this->context->smarty->assign('lastname',$lastname_customer);
               $this->context->smarty->assign('api',$key);
+              $this->context->smarty->assign('email',$email);
               $this->context->smarty->assign('price',$price);
               $this->context->smarty->assign('color',$color);
               $this->context->smarty->assign('position',$position);
