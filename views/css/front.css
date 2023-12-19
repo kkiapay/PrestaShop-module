@@ -26,7 +26,7 @@
 * to avoid any conflicts with others containers.
 */
 
-.payment-option:has(img[src="modules/kkiapay/logo.png"]) {
+.payment-option:has(img[src="modules/kkiapay/providers.png"]) {
   display: flex;
   align-items: center;
   margin-bottom: unset !important;
