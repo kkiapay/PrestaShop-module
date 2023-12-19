@@ -121,7 +121,7 @@ class Kkiapay extends PaymentModule
         $options= $cardPaymentOption->setCallToActionText('Payez par Mobile Money et par Carte Bancaire (Kkiapay)')
                           ->setAdditionalInformation($paymentForm)
                           ->setAction($this->context->link->getModuleLink($this->name, 'confirmation', array(), true))
-                          ->setLogo('modules/kkiapay/logo.png');
+                          ->setLogo('modules/kkiapay/logo.svg');
         
         return [$options];
 
