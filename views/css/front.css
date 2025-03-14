@@ -26,7 +26,7 @@
 * to avoid any conflicts with others containers.
 */
 
-.payment-option:has(img[src="modules/kkiapay/logo.png"]) {
+.payment-option:has(img[src*="modules/kkiapay/logo.svg"]) {
   display: flex;
   align-items: center;
   margin-bottom: unset !important;
@@ -34,7 +34,7 @@
   > label {
     margin-bottom: unset !important;
     > img {
-      height: 28px;
+      height: 30px;
     }
   }
 }
